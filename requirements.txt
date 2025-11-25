@@ -1,0 +1,21 @@
+# --- Core Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.2
+python-multipart
+
+# --- Infrastructure
+google-cloud-storage==2.14.0
+google-cloud-pubsub==2.19.0
+requests==2.32.5                     
+google-auth==2.43.0                  
+
+# --- V3/V4 Vision/AI Stack 
+opencv-python-headless==4.8.1.78
+pytesseract==0.3.10
+google-cloud-aiplatform>=1.60.0
+numpy>=1.26.0,<2.0.0
+
+# --- V5 Multimodality Stack (FINAL FIX) ---
+google-cloud-speech==2.25.0          
+pydub==0.25.1
