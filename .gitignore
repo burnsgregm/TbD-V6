@@ -1,28 +1,31 @@
-﻿# -- Python --
+﻿# ----------------------------------------
+# V6.0 TbD Engine Git Ignore List
+# ----------------------------------------
+
+# --- Environment & Configuration ---
+.env
+venv/
 __pycache__/
 *.pyc
-venv/
-.env
+*.swp
 .pytest_cache/
-
-# -- OS / IDE --
-.DS_Store
 .vscode/
-.idea/
 
-# -- Temporary Data --
-temp_uploads/
-*.log
-
-# -- Large Model Assets (Exclude from Git) --
+# --- Large Model Assets (Commit via LFS or Exclude) ---
+# Weights and models for Service C (Encoder) and Service D (Detector)
 *.h5
 *.zip
 *.onnx
 *.pt
-*.npy
 *.pickle
 *.bak
 
-# -- Specific Large Data Files --
-scripts/v4_lstm_training_sequences.json
-tbd-detector/calibration_image_sample_data_*.npy
+# --- Generated Data & Temporary Files ---
+# All training data, sample data, and compiled NumPy arrays
+*.npy
+*.json
+*.csv
+# Output from the container
+temp_uploads/
+logs/
+results/
