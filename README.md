@@ -1,154 +1,314 @@
-# Teach by Doing (TbD) Engine � V6.0
+# Teach-by-Doing (TbD) V6 – Pathways-as-Data Engine
 
-**Status:** Production Ready (Native Insight Release)  
-**Version:** 6.0.0  
-**Architecture:** Asynchronous Microservices Mesh (GCP)
+Teach-by-Doing (TbD) V6 is the ingestion and understanding engine for the **Pathways-as-Data (PAD)** ecosystem.  
+It converts expert task videos into machine-readable **Pathways** – structured JSON artifacts that can drive human
+documentation, LLM agents, and (eventually) robotics and automation workflows.
 
----
-
-## 1. Executive Summary
-
-The Teach by Doing (TbD) Engine is the core ingestion gateway for the Pathways as Data (PAD) platform. It transforms raw expert demonstrations (video + audio) into structured, machine-executable assets called Pathways.
-
-V6.0 **"Native Insight"** marks the transition from infrastructure to full intelligence. The system now utilizes active Machine Learning microservices to achieve **Pixel-Accurate Coordinate Detection** and **Temporal Procedural Memory**, eliminating the "Data Gap" for downstream AI agents and robotics.
+- **Author:** Greg Burns  
+- **Role:** Systems Architect · ML Engineer · Product Co-Designer  
+- **Core Stack:** Python · OpenCV · Optical Flow / SSIM · LLMs (Gemini / GPT) · LSTM-style Temporal Encoder · FastAPI · Streamlit
 
 ---
 
-## 2. System Architecture
+## 1. High-Level Architecture
 
-The system utilizes a decoupled, asynchronous **Fan-Out Architecture** deployed on Google Cloud Run.
+At a high level, TbD V6 implements the following flow:
 
-### Core Microservices
+1. **Ingestion**  
+   A client uploads a task video (screen recording or camera capture) and receives a trace ID.
 
-| Service              | Role              | Tech Stack                   | Function                                                                                                                                         |
-|----------------------|-------------------|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Service A: Dispatcher| API Gateway       | Python / FastAPI             | Ingests requests, generates OpenTelemetry Traces, and queues tasks to Pub/Sub. Returns `202 Accepted`.                                          |
-| Service B: Worker    | Orchestrator      | Python / OpenCV / Gemini     | The "Brain." Handles audio transcription, LLM reasoning, and coordinates calls to Services C & D.                                               |
-| Service C: Temporal Encoder | Memory Engine | TensorFlow (CPU) / LSTM | Processes sequential semantic history to generate a 512D Temporal Context Vector.                                                               |
-| Service D: Object Detector | Pixel Accuracy | YOLO / Vision Transformer | Verifies UI elements and returns pixel-perfect bounding boxes (`ui_region`).                                                                    |
+2. **Dispatch & Orchestration**  
+   A dispatcher service assigns work to a background worker using Pub/Sub-style messaging and idempotent state tracking.
 
-### Infrastructure Components
+3. **Processing Pipeline**  
+   The worker:
+   - Segments video into candidate steps (SSIM / optical flow + heuristics)
+   - Runs OCR / visual analysis
+   - Calls an LLM to generate semantic step descriptions
+   - Calls a separate temporal encoder service (LSTM) to derive context vectors over the sequence
+   - Optionally calls an object detector to improve UI-region grounding
 
-- **Transport:** Google Cloud Pub/Sub (`tbd-ingest-tasks`, `pad-agent-tasks`).
-- **Storage:** Google Cloud Storage (GCS) for raw video input and JSON output.
-- **State:** Redis/Firestore (for Idempotency checks).
-- **AI APIs:** Google Cloud Speech-to-Text, Vertex AI (Gemini 2.5 Pro).
+4. **Pathway Export (PAD)**  
+   The system writes a `Pathway.json` file containing:
+   - Nodes (steps) with descriptions, timestamps, metadata
+   - Edges/transitions between steps
+   - Temporal embeddings / context vectors
+   - Additional metadata for downstream consumers
+
+5. **Frontend & UX**  
+   A Streamlit frontend lets users:
+   - Upload videos
+   - Trigger processing
+   - Inspect the generated pathway visually
+   - Download the `Pathway.json` artifact
+
+### Architecture Diagram
+
+The core architecture is captured in the following diagram:
+
+![Teach-by-Doing V6 Architecture](images/Burns_Greg_CS_TbD_V6.svg)
+
+This diagram illustrates:
+
+- Client → Dispatcher (API gateway) → Worker orchestration  
+- Vision / OCR / LLM / Temporal Encoder / Object Detector services  
+- Output and registration of `Pathway.json` artifacts  
 
 ---
 
-## 3. Key V6 Capabilities
+## 2. Repository Structure
 
-- **Multimodal Fusion:**  
-  Ingests Video (Pixels), Audio (Voice Transcript via STT), and Context (LLM Reasoning) to determine user intent.
+This repository is organized to reflect the core TbD V6 services and supporting assets:
 
-- **Guaranteed Pixel Accuracy:**  
-  Replaced Tesseract OCR with a custom Object Detection Model (Service D) to guarantee reliable coordinate data for robotic execution.
-
-- **Sequential Memory:**  
-  Uses a dedicated LSTM Microservice (Service C) to embed the procedural state, allowing downstream agents to know where a user is in a long workflow.
-
-- **Enterprise Hardening:**  
-  Full Idempotency (prevents duplicate billing) and Distributed Tracing (end-to-end log correlation).
-
-- **Compliance Lock:**  
-  Enforces mandatory Marketplace metadata (`license_tier`, `compliance_tag`) before asset release.
+```text
+tbd/
+├── app/                     # Core backend services (dispatcher, worker, pipeline)
+│   ├── main.py              # FastAPI app entrypoint (dispatcher / worker API)
+│   ├── schema.py            # Pathways-as-Data (PAD) Pydantic models
+│   └── services/            # Service layer components
+│       ├── dispatcher.py    # Request ingestion, trace handling
+│       ├── genai.py         # LLM integration for semantic descriptions
+│       ├── ocr.py           # OCR / text extraction helpers
+│       ├── pipeline.py      # Orchestration of the processing pipeline
+│       ├── segment.py       # SSIM / optical flow segmentation utilities
+│       ├── vision.py        # Computer vision helpers
+│       └── worker.py        # Worker implementation for long-running tasks
+│
+├── frontend/                # Streamlit demo UI
+│   ├── frontend.py          # Main Streamlit app
+│   └── requirements.txt     # Frontend-only dependencies
+│
+├── tbd-detector/            # Object detection microservice (Service D)
+│   ├── detector_app/
+│   │   └── main.py          # Detector service entrypoint
+│   ├── build_yolo_model.py  # Model build / conversion script
+│   ├── yolov8n.pt           # YOLOv8 model weights (PyTorch)
+│   ├── yolov8n.onnx         # YOLOv8 ONNX export
+│   ├── model_yolo.h5        # Converted YOLO model
+│   ├── model_yolo.zip       # Archived model
+│   ├── calibration_image_sample_data_*.npy  # Calibration / sample data
+│   ├── detector_requirements.txt
+│   └── Dockerfile           # Container build for the detector
+│
+├── tbd-encoder/             # Temporal encoder microservice (Service C)
+│   ├── encoder_app/
+│   │   └── main.py          # Encoder service entrypoint (LSTM-style)
+│   ├── lstm_model.h5        # Pretrained LSTM temporal model
+│   ├── tokenizer.pickle.bak # Tokenizer / vocabulary data
+│   ├── create_tokenizer.py  # Tokenizer creation script
+│   ├── create_compatible_tokenizer.py
+│   ├── encoder_requirements.txt
+│   └── Dockerfile           # Container build for the encoder
+│
+├── docs/                    # Design + engineering documentation
+│   ├── API Definition - FreeFuse - TbD V6.pdf
+│   ├── DM - FreeFuse - TbD V2.pdf
+│   ├── DM - FreeFuse - TbD V3.pdf
+│   ├── DM - FreeFuse - TbD V4.pdf
+│   ├── DM - FreeFuse - TbD V5.pdf
+│   ├── DM - FreeFuse - TbD V5.1.pdf
+│   ├── DM - FreeFuse - TbD V6.pdf
+│   ├── PVD - FreeFuse - TbD V1.pdf
+│   ├── SRS - FreeFuse - TbD V1.pdf
+│   ├── SRS - FreeFuse - TbD V2.pdf
+│   ├── SRS - FreeFuse - TbD V3.pdf
+│   ├── SRS+TDD - FreeFuse - TbD V4.pdf
+│   ├── SRS+TDD - FreeFuse - TbD V5.pdf
+│   ├── SRS+TDD - FreeFuse - TbD V6.pdf
+│   ├── SRS+TDD - FreeFuse - TbD V7.pdf
+│   ├── TDD - FreeFuse - TbD V1.pdf
+│   ├── TDD - FreeFuse - TbD V2.pdf
+│   ├── TDD - FreeFuse - TdD V3.pdf
+│   ├── sample_pathway.json  # Example Pathway.json output
+│   ├── Burns_Greg_CS_TbD_V6.html    # Portfolio case study (HTML)
+│   └── Burns_Greg_CS_1P_TbD_V6.pdf  # One-page recruiter summary
+│
+├── images/                  # Case study and README visuals
+│   ├── Burns_Greg_CS_TbD_V6.svg        # Architecture / workflow diagram
+│   ├── Burns_Greg_CS_TbD_V6_screen.png # Streamlit demo screenshot
+│   └── Burns_Greg_CS_TbD_V6_json.png   # Pathway.json JSON-output screenshot
+│
+├── scripts/                 # Training & experimentation scripts
+│   ├── build_training_dataset.py       # Build sequences for temporal encoder
+│   ├── train_lstm.py                   # Train LSTM temporal model
+│   └── v4_lstm_training_sequences.json # Sample training sequences
+│
+├── deploy_v6.ps1            # PowerShell script to deploy TbD V6 stack
+├── requirements.txt         # Root/backend dependencies
+├── .gitignore
+└── README.md                # You are here
+```
 
 ---
 
-## 4. Directory Structure
+## 3. Running the Project Locally
 
-The project must be structured as follows for the deployment scripts to function:
+> **Note:** This repo is structured to be cloud-native and service-oriented.  
+> For local exploration and demos, you can run the core backend + Streamlit front end on your machine.
+
+### 3.1. Prerequisites
+
+- Python 3.10+ recommended  
+- (Optional) virtualenv or `python -m venv`  
+- FFmpeg installed and available on your `PATH` (for audio extraction)  
+
+Clone the repository:
 
 ```bash
-tbd-v6/
-??? deploy_v6_master.ps1       # Master Orchestrator Script
-??? requirements.txt           # Shared dependencies
-??? app/                       # Service A & B Codebase
-?   ??? main.py                # Dispatcher Entrypoint
-?   ??? worker.py              # Worker Entrypoint
-?   ??? services/              # Business Logic (pipeline, genai, vision)
-??? tbd-encoder/               # Service C (LSTM)
-?   ??? Dockerfile             # CPU-Optimized TensorFlow Build
-?   ??? lstm_model.h5          # Trained Model Weights
-?   ??? tokenizer.pickle       # Tokenizer Asset
-??? tbd-detector/              # Service D (YOLO)
-    ??? Dockerfile             # Inference Container
-    ??? model_yolo.zip         # SavedModel Assets
+git clone https://github.com/burnsgregm/TbD-V6.git
+cd TbD-V6
+```
 
-## 5. Usage Guide
+Create and activate a virtual environment:
 
-### 5.1 Submitting a Job
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+```
 
-The Dispatcher exposes a public REST endpoint.
+Install backend requirements:
 
-- **Endpoint:** `POST /submit`  
-- **Content-Type:** `application/json`
+```bash
+pip install -r requirements.txt
+```
 
-**Request JSON:**
+Install frontend requirements:
 
-```json
-{
-  "task_id": "550e8400-e29b-41d4-a716-446655440000",
-  "client_id": "streamlit-dashboard",
-  "gcs_uri": "gs://pad-raw-video/demo_manufacturing_process.mp4",
-  "output_bucket": "pad-results-processed",
-  "config": {
-    "target_vertical": "manufacturing",
-    "compliance_tag": "AS9100"
-  }
-}
+```bash
+pip install -r frontend/requirements.txt
+```
 
-**Response (Immediate):**
+If you want to run the detector and encoder services locally as well, install their requirements too:
 
-```json
-{
-  "status": "queued",
-  "trace_id": "a1b2c3d4e5...",
-  "queue_depth": "approximate"
-}
+```bash
+pip install -r tbd-detector/detector_requirements.txt
+pip install -r tbd-encoder/encoder_requirements.txt
+```
 
-### 5.2 The Output (`Pathway.json` v0.5)
+---
 
-The final asset is saved to the output bucket. It is fully compliant with the PAD Schema.
+## 4. Running the Backend (Dispatcher & Worker)
 
-```jsonc
-{
-  "pathway_id": "...",
-  "metadata": {
-    "license_tier": "royalty-pro",
-    "compliance_tag": "AS9100"
-  },
-  "nodes": [
-    {
-      "id": "node_1",
-      "type": "action",
-      "semantic_description": "User clicks 'Calibrate' to zero the Z-axis.",
-      "full_audio_transcript_segment": "Okay, now I'm zeroing the bed height.",
-      "ui_region": [100, 200, 50, 25],
-      "data": {
-        "temporal_context_vector": [0.12, 0.45, ...], // 512D Vector
-        "telemetry_context": {}
-      }
-    }
-  ]
-}
+The core FastAPI backend lives in `app/`.
 
-## 6. Deployment Instructions
+To run it locally (development mode):
 
-### Prerequisites
+```bash
+uvicorn app.main:app --reload --port 8000
+```
 
-- Google Cloud Project with Billing enabled.
-- APIs Enabled: Cloud Run, Pub/Sub, Artifact Registry, Vertex AI, Speech-to-Text.
-- `gcloud` CLI authenticated.
+Key responsibilities:
 
-### Deployment Steps
+- Accept upload requests and metadata
+- Generate / manage trace IDs
+- Delegate work to the worker pipeline
+- Expose endpoints for status and (optionally) retrieving `Pathway.json`
 
-1. **Infrastructure Setup**  
-   Ensure Pub/Sub topics (`tbd-ingest-tasks`, `pad-agent-tasks`) and GCS buckets exist.
+Refer to `app/schema.py` for the core PAD data models and `app/services/pipeline.py` and `app/services/worker.py` for the orchestration logic.
 
-2. **Service C & D (The Brains)**  
-   Deploy the AI microservices first to generate internal URLs.
+---
 
-   ```powershell
-   ./deploy_encoder.ps1
-   ./deploy_detector.ps1
+## 5. Running the Streamlit Frontend
+
+The Streamlit UI gives you a simple way to try TbD V6 end-to-end.
+
+From the repo root:
+
+```bash
+streamlit run frontend/frontend.py
+```
+
+Typical workflow:
+
+1. Upload a short task video (screen capture or demo clip).
+2. Trigger processing via the UI.
+3. View:
+   - A high-level pathway visualization (steps and transitions).
+   - The underlying `Pathway.json` output.
+
+Screenshots used in the case study and README:
+
+### Demo UI
+
+![TbD V6 Streamlit Demo](images/Burns_Greg_CS_TbD_V6_screen.png)
+
+### Pathway.json Output
+
+![TbD V6 Pathway JSON](images/Burns_Greg_CS_TbD_V6_json.png)
+
+These images are taken directly from the running Streamlit app and illustrate both the human-understandable and machine-readable views of the same workflow.
+
+---
+
+## 6. Detector & Temporal Encoder Services
+
+### 6.1. Object Detector (tbd-detector)
+
+The detector service can be containerized or run directly with Python.
+
+Example (direct run):
+
+```bash
+cd tbd-detector
+pip install -r detector_requirements.txt
+python detector_app/main.py
+```
+
+This service is responsible for:
+
+- Improving **UI-region grounding** for pixel-accurate step detection.
+- Providing bounding boxes or regions of interest that can be correlated with LLM semantic outputs.
+
+### 6.2. Temporal Encoder (tbd-encoder)
+
+Similarly, the temporal encoder consumes tokenized step sequences and outputs context vectors.
+
+Example (direct run):
+
+```bash
+cd tbd-encoder
+pip install -r encoder_requirements.txt
+python encoder_app/main.py
+```
+
+Responsibilities:
+
+- Encode ordered steps into temporal embeddings.
+- Capture sequence structure, dependencies, and branching.
+- Provide context vectors used to enrich each pathway node.
+
+---
+
+## 7. Sample Output – Pathway.json
+
+A sample `Pathway.json` file is included in `docs/sample_pathway.json`.  
+It illustrates how TbD V6 serializes a single video into a reusable PAD artifact:
+
+- Nodes with human-readable descriptions.
+- Edges representing allowed transitions or flows.
+- Temporal context vectors per node.
+- Additional metadata for analytics, documentation, and execution.
+
+---
+
+## 8. Deployment
+
+The `deploy_v6.ps1` script provides a baseline for deploying TbD V6 to a cloud environment (e.g., GCP), including:
+
+- Building and pushing container images.
+- Deploying services (dispatcher, worker, detector, encoder).
+- Wiring configuration and environment variables.
+
+Adjust the script to align with your cloud project, registry, and service naming conventions.
+
+---
+
+## 9. Credits & Contact
+
+**Author:** Greg Burns  
+**GitHub:** [github.com/burnsgregm](https://github.com/burnsgregm)  
+
+If you’re evaluating this repository as part of a hiring process and would like a deeper walkthrough of the TbD V6 architecture, training data strategy, or future roadmap (e.g., robotics integration, simulation agents, compliance overlays), feel free to reach out via LinkedIn or GitHub.

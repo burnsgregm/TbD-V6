@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Case Study – Teach-by-Doing (TbD) V6 – Pathways-as-Data Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-elevated: #0b1020;
+      --bg-soft: #111827;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --text-main: #e5e7eb;
+      --text-soft: #cbd5f5;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --chip-bg: #020617;
+      --chip-border: #1f2937;
+      --success: #22c55e;
+      --warn: #facc15;
+      --danger: #fb7185;
+      --code-bg: #020617;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, #1e293b 0, #020617 52%, #02010a 100%);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      background:
+        radial-gradient(circle at top left, #1f2937 0, #020617 55%, #02010a 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(30, 64, 175, 0.55);
+      box-shadow:
+        0 26px 60px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 55%),
+        linear-gradient(to right, rgba(15,23,42,0.96), rgba(2,6,23,0.98));
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 2.4vw + 1.1rem, 2.3rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    header h1 span.tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(34,197,94,0.7);
+      color: var(--success);
+      background: rgba(22,163,74,0.08);
+    }
+
+    header p.subtitle {
+      margin: 0;
+      font-size: 0.96rem;
+      color: var(--text-soft);
+      max-width: 52rem;
+    }
+
+    .meta-row {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.82rem;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.38);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill strong {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    }
+
+    aside {
+      padding: 18px 20px 22px;
+      border-right: 1px solid var(--border-subtle);
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 60%, #02010a 100%);
+    }
+
+    main {
+      padding: 20px 26px 24px;
+    }
+
+    h2 {
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-size: 1.12rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+    }
+
+    h3 {
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      color: var(--text-main);
+    }
+
+    p {
+      margin: 6px 0 8px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text-soft);
+    }
+
+    ul {
+      margin: 4px 0 10px 18px;
+      padding-left: 0;
+    }
+
+    li {
+      margin: 3px 0;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .sidebar-section {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed rgba(55,65,81,0.75);
+    }
+
+    .sidebar-section:last-of-type {
+      border-bottom: none;
+    }
+
+    .sidebar-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .sidebar-kv {
+      font-size: 0.9rem;
+      margin: 2px 0;
+      color: var(--text-soft);
+    }
+
+    .sidebar-kv span.label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-right: 4px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.55);
+      background: rgba(15,23,42,0.96);
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .badge.highlight {
+      border-color: rgba(56,189,248,0.8);
+      color: var(--accent);
+      background: rgba(15,23,42,1);
+    }
+
+    .callout {
+      margin: 10px 0 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background:
+        linear-gradient(135deg, rgba(56,189,248,0.14), rgba(15,23,42,0.96));
+      border: 1px solid rgba(56,189,248,0.6);
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+
+    .callout strong {
+      color: var(--accent);
+    }
+
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .kpi {
+      flex: 1 1 110px;
+      min-width: 120px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.18), #020617 65%);
+      border: 1px solid rgba(56,189,248,0.5);
+    }
+
+    .kpi-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .kpi-value {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .kpi-note {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-top: 2px;
+    }
+
+    .section-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 10px;
+    }
+
+    .section-chip {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      border: 1px solid rgba(148,163,184,0.5);
+      color: var(--text-muted);
+    }
+
+    .section-chip strong {
+      color: var(--accent);
+    }
+
+    figure.arch-diagram,
+    figure.screenshot {
+      margin: 10px 0 12px;
+      padding: 9px 9px 8px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(2,6,23,0.98));
+      border: 1px solid rgba(30,64,175,0.6);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      max-height: 430px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #020617;
+    }
+
+    figcaption {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      font-size: 0.82rem;
+      background: var(--code-bg);
+      border-radius: 4px;
+      padding: 1px 4px;
+      border: 1px solid rgba(148,163,184,0.35);
+    }
+
+    @media (max-width: 880px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      aside {
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      header {
+        padding: 20px 18px 16px;
+      }
+      main {
+        padding: 18px 18px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>
+        Teach-by-Doing (TbD) V6 – Pathways-as-Data Engine
+        <span class="tag">Case Study</span>
+      </h1>
+      <p class="subtitle">
+        TbD V6 is the core ingestion and understanding engine for the Pathways-as-Data (PAD) ecosystem,
+        transforming expert workflows from video into executable, machine-readable “Pathways” for humans,
+        AI agents, and robots.
+      </p>
+      <div class="meta-row">
+        <span class="pill"><strong>Role</strong> Systems Architect · ML Engineer · Product Co-Designer</span>
+        <span class="pill"><strong>Domain</strong> Workflow Intelligence · EdTech · Robotics-Ready Knowledge</span>
+        <span class="pill"><strong>Stack</strong> GCP · Python · OpenCV · LLMs · Temporal Encoding · JSON/PAD</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside>
+        <div class="sidebar-section">
+          <div class="sidebar-title">Project Snapshot</div>
+          <div class="sidebar-kv">
+            <span class="label">Product</span> FreeFuse Teach-by-Doing (TbD) Engine
+          </div>
+          <div class="sidebar-kv">
+            <span class="label">Version</span> V6 – Temporal Pathways-as-Data
+          </div>
+          <div class="sidebar-kv">
+            <span class="label">Scope</span> Ingestion · Understanding · Pathway Export
+          </div>
+          <div class="badge-row">
+            <span class="badge highlight">Pathways-as-Data (PAD)</span>
+            <span class="badge">Temporal Embeddings</span>
+            <span class="badge">LLM Semantic Enrichment</span>
+            <span class="badge">Video-to-Workflow</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Links</div>
+          <div class="sidebar-kv">
+            <span class="label">GitHub</span>
+            <a href="https://github.com/burnsgregm/TbD-V6" target="_blank" rel="noopener">
+              github.com/burnsgregm/TbD-V6
+            </a>
+          </div>
+          <div class="sidebar-kv">
+            <span class="label">Live Demo</span>
+            <a href="https://tbd-v6.streamlit.app/" target="_blank" rel="noopener">
+              tbd-v6.streamlit.app
+            </a>
+          </div>
+          <div class="sidebar-kv">
+            <span class="label">1-Pager</span>
+            <a href="Burns_Greg_CS_1P_TbD_V6.pdf" target="_blank" rel="noopener">
+              Burns_Greg_CS_1P_TbD_V6.pdf
+            </a>
+          </div>
+          <div class="sidebar-kv">
+            <span class="label">Diagram</span>
+            <a href="Burns_Greg_CS_TbD_V6.svg" target="_blank" rel="noopener">
+              Burns_Greg_CS_TbD_V6.svg
+            </a>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Tech Stack</div>
+          <div class="badge-row">
+            <span class="badge">Python 3.x</span>
+            <span class="badge">OpenCV</span>
+            <span class="badge">Optical Flow / SSIM</span>
+            <span class="badge">LLMs (Gemini / GPT)</span>
+            <span class="badge">Temporal Encoder (LSTM-style)</span>
+            <span class="badge">GCS · Pub/Sub</span>
+            <span class="badge">Streamlit</span>
+            <span class="badge">JSON / PAD Schema</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Key Outcomes</div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="kpi-label">Output</div>
+              <div class="kpi-value">Pathway.json</div>
+              <div class="kpi-note">
+                Machine-readable workflows with steps, transitions, and temporal context.
+              </div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Source</div>
+              <div class="kpi-value">Unstructured Video</div>
+              <div class="kpi-note">
+                Screen capture, tutorials, and real-world task recordings as input.
+              </div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="kpi-label">Use Cases</div>
+              <div class="kpi-value">Documentation & Robotics</div>
+              <div class="kpi-note">
+                Human SOPs + training data for agents and bots.
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <h2>Overview</h2>
+        <p>
+          Teach-by-Doing (TbD) V6 is the ingestion and understanding engine for FreeFuse’s
+          Pathways-as-Data platform. It converts expert behavior captured in video into a structured,
+          temporal graph of steps, transitions, and metadata called a <code>Pathway</code>. The same
+          artifact can be used as:
+        </p>
+        <ul>
+          <li><strong>Human-facing documentation</strong> – clear, step-by-step instructions.</li>
+          <li><strong>Training data</strong> – labeled trajectories for LLM agents and automation.</li>
+          <li><strong>Robotics integration</strong> – a semantic “script” for embodied systems.</li>
+        </ul>
+
+        <div class="section-chip-row">
+          <span class="section-chip"><strong>Users:</strong> SMEs, content creators, operations leads</span>
+          <span class="section-chip"><strong>Consumers:</strong> learners, LLM agents, automation systems</span>
+          <span class="section-chip"><strong>Artifact:</strong> Pathway.json (PAD schema)</span>
+        </div>
+
+        <div class="callout">
+          <strong>Short version:</strong> TbD watches how an expert actually does the work, then produces a
+          machine-readable “how-to” that machines and humans can both consume.
+        </div>
+
+        <h2>Problem Context</h2>
+        <p>
+          Most organizations have critical know-how trapped in unstructured formats: recorded Zoom
+          calls, tutorial videos, tribal knowledge, and brittle SOPs nobody maintains. That creates
+          three compounding gaps:
+        </p>
+        <ul>
+          <li><strong>Data Gap:</strong> No consistent, labeled “unit of work” for training AI agents.</li>
+          <li><strong>Tech Gap:</strong> Experts can’t (and shouldn’t) encode workflows as state machines.</li>
+          <li><strong>Strategy Gap:</strong> Without a standard format, there is no ecosystem or marketplace for reusable workflows.</li>
+        </ul>
+        <p>
+          TbD is designed to bridge all three by turning unstructured “doing” into structured
+          Pathways-as-Data that can sit at the heart of automation, continuous learning, and robotics.
+        </p>
+
+        <h2>Version Evolution (V1 → V6)</h2>
+        <p>
+          TbD V6 is the culmination of several iteration cycles. Each version added a missing layer of
+          realism or capability:
+        </p>
+        <ul>
+          <li>
+            <strong>V1 – Local MVP:</strong> Basic video ingestion, scene detection, and <code>pathway.json</code> export
+            using a “bridge stack” of OpenCV + OCR. Proved the concept that video could be turned
+            into steps.
+          </li>
+          <li>
+            <strong>V2 – GCP Fan-Out:</strong> Moved ingestion to a scalable cloud pattern with GCS, Pub/Sub,
+            and per-segment processing, making longer videos feasible.
+          </li>
+          <li>
+            <strong>V3 – Semantic Enrichment:</strong> Added LLM-driven captions and step descriptions so the
+            resulting pathways read like rich expert documentation instead of raw frames.
+          </li>
+          <li>
+            <strong>V4 – Temporal Grounding:</strong> Introduced a temporal encoder (LSTM-style) to capture
+            sequence, dependencies, and multi-step context, not just isolated moments.
+          </li>
+          <li>
+            <strong>V5 – Compliance & Metadata:</strong> Added stronger metadata, depth perception, and hooks
+            for compliance frameworks (e.g., AS9100-style traceability).
+          </li>
+          <li>
+            <strong>V6 – Pathways-as-Data Engine:</strong> Unified API, stable PAD schema, temporal embeddings,
+            and a cohesive backend powering a Streamlit demo and downstream systems.
+          </li>
+        </ul>
+
+        <h2>Architecture</h2>
+        <p>
+          TbD V6 is implemented as a cloud-native pipeline that ingests video, detects meaningful
+          changes, enriches them with semantics and temporal context, and exports a single
+          <code>Pathway</code> artifact that any downstream system can consume.
+        </p>
+
+        <figure class="arch-diagram">
+          <img src="Burns_Greg_CS_TbD_V6.svg" alt="Teach-by-Doing V6 architecture diagram" />
+          <figcaption>
+            TbD V6 architecture: video ingestion → segmentation (visual & temporal cues) → semantic
+            description via LLM → temporal encoding → Pathways-as-Data export as <code>Pathway.json</code> for
+            humans, LLM agents, and robotics workflows.
+          </figcaption>
+        </figure>
+
+        <h3>Key Responsibilities by Stage</h3>
+        <ul>
+          <li>
+            <strong>Ingestion:</strong> Accepts source videos from SMEs (screen captures, task recordings) and
+            normalizes them for processing.
+          </li>
+          <li>
+            <strong>Segmentation:</strong> Uses computer vision (optical flow, SSIM) and heuristic cues (UI
+            changes, cursor movement, pauses) to identify candidate step boundaries.
+          </li>
+          <li>
+            <strong>Semantic Enrichment:</strong> Calls an LLM to describe each candidate step, expanding from
+            “frame X to frame Y” into a natural-language explanation plus key fields (action,
+            object, tools, preconditions).
+          </li>
+          <li>
+            <strong>Temporal Encoding:</strong> Runs a temporal encoder over the ordered steps to learn
+            transitions, branching, and dependencies, yielding a contextual embedding for each node.
+          </li>
+          <li>
+            <strong>PAD Export:</strong> Writes out a <code>Pathway</code> JSON object with nodes, edges, timestamps,
+            metadata, and temporal vectors, ready for orchestration, simulation, or documentation.
+          </li>
+        </ul>
+
+        <h2>Demo Experience</h2>
+        <p>
+          The TbD V6 Streamlit demo exposes the core engine in a way that non-engineers can
+          immediately understand: upload a clip of a task being performed, then inspect the
+          generated pathway as a visual and JSON artifact.
+        </p>
+
+        <figure class="screenshot">
+          <img src="Burns_Greg_CS_TbD_V6_screen.png"
+               alt="TbD V6 Streamlit demo screenshot showing video upload and generated steps" />
+          <figcaption>
+            TbD V6 Streamlit demo: upload a task video, run the pipeline, and inspect the
+            generated steps, transitions, and metadata in a visual Pathway view.
+          </figcaption>
+        </figure>
+
+        <figure class="screenshot">
+          <img src="Burns_Greg_CS_TbD_V6_json.png"
+               alt="TbD V6 JSON response screenshot showing Pathway.json structure" />
+          <figcaption>
+            Pathway.json output: machine-readable representation of the workflow, including step
+            descriptions, transitions, timestamps, and temporal embeddings.
+          </figcaption>
+        </figure>
+
+        <h3>Typical User Flow</h3>
+        <ul>
+          <li>An expert records themselves completing a task (e.g., configuring software, assembling a part).</li>
+          <li>The video is ingested into TbD V6 via the UI or API.</li>
+          <li>TbD segments the video into discrete steps, describes them, and encodes transitions.</li>
+          <li>A <code>Pathway.json</code> file is produced and can be viewed, edited, or passed downstream.</li>
+          <li>That Pathway can now power documentation, agent guidance, or robotics routines.</li>
+        </ul>
+
+        <h2>Implementation Highlights</h2>
+        <h3>1. Computer Vision + Heuristic Segmentation</h3>
+        <ul>
+          <li>Uses SSIM and optical flow to detect meaningful visual changes between frames.</li>
+          <li>Combines frame-level signals with domain heuristics (e.g., cursor pause, UI transitions) to infer step boundaries.</li>
+        </ul>
+
+        <h3>2. LLM-Based Semantic Layer</h3>
+        <ul>
+          <li>Frames around each boundary are summarized by an LLM, generating human-readable step descriptions.</li>
+          <li>Prompts extract structured fields (verb, object, tools, context) to populate PAD schema fields.</li>
+        </ul>
+
+        <h3>3. Temporal Encoder for Pathway Intelligence</h3>
+        <ul>
+          <li>A temporal model (e.g., LSTM-style encoder) processes the ordered steps to learn how they relate over time.</li>
+          <li>Produces embeddings that capture sequence, branching, and context—crucial for agents and robotics.</li>
+        </ul>
+
+        <h3>4. Pathways-as-Data Schema</h3>
+        <ul>
+          <li>Each pathway is stored as a JSON object with nodes, edges, timestamps, and metadata.</li>
+          <li>Supports multiple “views”: human documentation, analytics, and machine execution.</li>
+        </ul>
+
+        <h2>Impact & What This Demonstrates</h2>
+        <p>
+          TbD V6 demonstrates how to turn messy, unstructured behavioral data into a clean,
+          standardized asset that can drive multiple lines of value:
+        </p>
+        <ul>
+          <li><strong>Operational:</strong> Generate living SOPs without forcing experts to write documentation.</li>
+          <li><strong>Training & AI:</strong> Supply rich, labeled trajectories for LLM agents and copilots.</li>
+          <li><strong>Robotics & Automation:</strong> Provide high-level semantic scripts that can be mapped to skills.</li>
+        </ul>
+        <p>
+          From a skills perspective, TbD V6 showcases my ability to think and build at the level of
+          platforms: designing schemas, temporal models, and pipelines that are useful to humans,
+          software, and hardware all at once.
+        </p>
+
+        <h2>Assets</h2>
+        <ul>
+          <li>
+            <strong>GitHub Repository:</strong>
+            <a href="https://github.com/burnsgregm/TbD-V6" target="_blank" rel="noopener">
+              github.com/burnsgregm/TbD-V6
+            </a>
+          </li>
+          <li>
+            <strong>Live Demo:</strong>
+            <a href="https://tbd-v6.streamlit.app/" target="_blank" rel="noopener">
+              tbd-v6.streamlit.app
+            </a>
+          </li>
+          <li>
+            <strong>Case Study 1-Pager:</strong>
+            <a href="Burns_Greg_CS_1P_TbD_V6.pdf" target="_blank" rel="noopener">
+              Burns_Greg_CS_1P_TbD_V6.pdf
+            </a>
+          </li>
+          <li>
+            <strong>Workflow Diagram:</strong>
+            <a href="Burns_Greg_CS_TbD_V6.svg" target="_blank" rel="noopener">
+              Burns_Greg_CS_TbD_V6.svg
+            </a>
+          </li>
+        </ul>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

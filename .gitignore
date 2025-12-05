@@ -1,8 +1,28 @@
-﻿__pycache__/
+﻿# -- Python --
+__pycache__/
 *.pyc
 venv/
 .env
+.pytest_cache/
+
+# -- OS / IDE --
 .DS_Store
 .vscode/
 .idea/
+
+# -- Temporary Data --
 temp_uploads/
+*.log
+
+# -- Large Model Assets (Exclude from Git) --
+*.h5
+*.zip
+*.onnx
+*.pt
+*.npy
+*.pickle
+*.bak
+
+# -- Specific Large Data Files --
+scripts/v4_lstm_training_sequences.json
+tbd-detector/calibration_image_sample_data_*.npy

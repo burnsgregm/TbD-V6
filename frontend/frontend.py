@@ -21,7 +21,7 @@ except FileNotFoundError:
 # --- App Setup ---
 st.set_page_config(page_title="TbD V6 Test Console", layout="wide")
 st.title("Teach by Doing (TbD) V6 - Test Console")
-st.markdown(f"**Project:** {PROJECT_ID} | **Dispatcher:** {DISPATCHER_URL}")
+st.markdown(f"**Project:** tbd-v6 | **Dispatcher:** {DISPATCHER_URL}")
 
 # --- Authentication ---
 @st.cache_resource
